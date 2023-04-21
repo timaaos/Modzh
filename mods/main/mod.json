@@ -1,0 +1,7 @@
+{
+    "id": "main",
+    "name": "Modzh Main",
+    "version": "0.0.1",
+    "author": "@timaosimpson",
+    "files": ["pezh_modal.lua","splashscreen.lua"]
+}
