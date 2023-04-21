@@ -34,24 +34,27 @@ def inject_mods_into(pid):
     injected_scripts = []
     injected_scripts_data = {}
     log(f'Starting to inject..')
-    for f in os.listdir(config.mods_directory):
-        f_dir = config.mods_directory+f
-        mod_file = f_dir+"/mod.json"
-        mod_config = json.loads(open(mod_file,'r').read())
-        log(f'{colorama.Back.BLUE}Injecting {mod_config["name"]} by {mod_config["author"]}:')
-        for script in mod_config["files"]:
-            if script in injected_scripts:
-                f1 = injected_scripts_data[script]
-                f2 = open(f_dir+"/"+script, 'r').read()
-                res = script_combine(f1, f2)
-                open(config.cubzh_directory+script,'w').write(res)
-                injected_scripts_data[script] = res
-                log(f' - Combined and injected {script}')
-                continue
-            shutil.copy(f_dir+"/"+script, config.cubzh_directory)
-            injected_scripts.append(script)
-            injected_scripts_data[script] = open(f_dir+"/"+script, 'r').read()
-            log(f' - Injected {script}')
+    try:
+        for f in os.listdir(config.mods_directory):
+            f_dir = config.mods_directory+"/"+f
+            mod_file = f_dir+"/mod.json"
+            mod_config = json.loads(open(mod_file,'r').read())
+            log(f'{colorama.Back.BLUE}Injecting {mod_config["name"]} by {mod_config["author"]}:')
+            for script in mod_config["files"]:
+                if script in injected_scripts:
+                    f1 = injected_scripts_data[script]
+                    f2 = open(f_dir+"/"+script, 'r').read()
+                    res = script_combine(f1, f2)
+                    open(config.cubzh_directory+script,'w').write(res)
+                    injected_scripts_data[script] = res
+                    log(f' - Combined and injected {script}')
+                    continue
+                shutil.copy(f_dir+"/"+script, config.cubzh_directory)
+                injected_scripts.append(script)
+                injected_scripts_data[script] = open(f_dir+"/"+script, 'r').read()
+                log(f' - Injected {script}')
+    except:
+        psutil_cubzh.resume()
     log(f'{colorama.Back.GREEN} Successfully injected, unfreezing...')
     psutil_cubzh.resume()
 
