@@ -1,4 +1,5 @@
 import subprocess, os, time, shutil, colorama, json
+import psutil
 
 cubzh_directory = os.getenv('APPDATA')+'\\Voxowl\\Particubes\\bundle\\scripts\\'
 cubzh_executable = 'D:/steam/steamapps/common/Cubzh/Cubzh.exe'
@@ -32,15 +33,17 @@ def script_combine(f1, f2):
 
 def launch_cubzh():
     log(f'Starting Cubzh..')
-    subprocess.Popen(cubzh_executable)
+    cubzh = subprocess.Popen(cubzh_executable)
     time.sleep(1)
+    psutil_cubzh = psutil.Process(cubzh.pid)
+    psutil_cubzh.suspend()
     injected_scripts = []
     injected_scripts_data = {}
     log(f'Starting to inject..')
     for f in os.listdir(mods_directory):
         mod_file = mods_directory+f+"/mod.json"
         mod_config = json.loads(open(mod_file,'r').read())
-        log(f'Injecting {mod_config["name"]} by {mod_config["author"]}:')
+        log(colorama.Back.BLUE+f'Injecting {mod_config["name"]} by {mod_config["author"]}:'+colorama.Back.RESET)
         for sc in mod_config["files"]:
             if sc in injected_scripts:
                 f1 = injected_scripts_data[sc]
@@ -54,5 +57,7 @@ def launch_cubzh():
             injected_scripts.append(sc)
             injected_scripts_data[sc] = open(mods_directory+f+"/"+sc, 'r').read()
             log(f' - Injected {sc}')
+    log(colorama.Back.GREEN+f'Successfully injected, unfreezing...'+colorama.Back.RESET)
+    psutil_cubzh.resume()
 
 launch_cubzh()
