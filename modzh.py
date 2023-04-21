@@ -1,14 +1,11 @@
 import subprocess, os, time, shutil, colorama, json
 import psutil
-
-cubzh_directory = os.getenv('APPDATA')+'\\Voxowl\\Particubes\\bundle\\scripts\\'
-cubzh_executable = 'D:/steam/steamapps/common/Cubzh/Cubzh.exe'
-mods_directory = 'D:/projects/modzh/mods/'
+import config
 
 colorama.init()
 
 def log(log_message):
-    print(colorama.Fore.MAGENTA+'[MODZH]: '+colorama.Fore.WHITE+log_message)
+    print(colorama.Fore.MAGENTA+'[MODZH]: '+colorama.Fore.WHITE+log_message+colorama.Back.RESET)
 
 def script_combine(f1, f2):
     firstfile_lines = f1.split('\n')
@@ -31,33 +28,37 @@ def script_combine(f1, f2):
         l2 += 1
     return "\n".join(combined)
 
-def launch_cubzh():
-    log(f'Starting Cubzh..')
-    cubzh = subprocess.Popen(cubzh_executable)
-    time.sleep(1)
-    psutil_cubzh = psutil.Process(cubzh.pid)
+def inject_mods_into(pid):
+    psutil_cubzh = psutil.Process(pid)
     psutil_cubzh.suspend()
     injected_scripts = []
     injected_scripts_data = {}
     log(f'Starting to inject..')
-    for f in os.listdir(mods_directory):
-        mod_file = mods_directory+f+"/mod.json"
+    for f in os.listdir(config.mods_directory):
+        f_dir = config.mods_directory+f
+        mod_file = f_dir+"/mod.json"
         mod_config = json.loads(open(mod_file,'r').read())
-        log(colorama.Back.BLUE+f'Injecting {mod_config["name"]} by {mod_config["author"]}:'+colorama.Back.RESET)
-        for sc in mod_config["files"]:
-            if sc in injected_scripts:
-                f1 = injected_scripts_data[sc]
-                f2 = open(mods_directory+f+"/"+sc, 'r').read()
+        log(f'{colorama.Back.BLUE}Injecting {mod_config["name"]} by {mod_config["author"]}:')
+        for script in mod_config["files"]:
+            if script in injected_scripts:
+                f1 = injected_scripts_data[script]
+                f2 = open(f_dir+"/"+script, 'r').read()
                 res = script_combine(f1, f2)
-                open(cubzh_directory+sc,'w').write(res)
-                injected_scripts_data[sc] = res
-                log(f' - Combined and injected {sc}')
+                open(config.cubzh_directory+script,'w').write(res)
+                injected_scripts_data[script] = res
+                log(f' - Combined and injected {script}')
                 continue
-            shutil.copy(mods_directory+f+"/"+sc, cubzh_directory)
-            injected_scripts.append(sc)
-            injected_scripts_data[sc] = open(mods_directory+f+"/"+sc, 'r').read()
-            log(f' - Injected {sc}')
-    log(colorama.Back.GREEN+f'Successfully injected, unfreezing...'+colorama.Back.RESET)
+            shutil.copy(f_dir+"/"+script, config.cubzh_directory)
+            injected_scripts.append(script)
+            injected_scripts_data[script] = open(f_dir+"/"+script, 'r').read()
+            log(f' - Injected {script}')
+    log(f'{colorama.Back.GREEN} Successfully injected, unfreezing...')
     psutil_cubzh.resume()
+
+def launch_cubzh():
+    log(f'Starting Cubzh..')
+    cubzh = subprocess.Popen(config.cubzh_executable)
+    time.sleep(1)
+    inject_mods_into(cubzh.pid)
 
 launch_cubzh()
